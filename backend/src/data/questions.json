@@ -1,0 +1,104 @@
+[
+  {
+    "id": "q1",
+    "order": 1,
+    "text": "I enjoy helping people solve their problems or feel better.",
+    "type": "scale",
+    "category": "interests",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q2",
+    "order": 2,
+    "text": "I like working with my hands and building or fixing things.",
+    "type": "scale",
+    "category": "interests",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q3",
+    "order": 3,
+    "text": "I'm comfortable using technology and learning new software.",
+    "type": "scale",
+    "category": "skills",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q4",
+    "order": 4,
+    "text": "I prefer to work:",
+    "type": "multiple-choice",
+    "category": "preferences",
+    "options": ["Mostly indoors", "Mostly outdoors", "A mix of both"]
+  },
+  {
+    "id": "q5",
+    "order": 5,
+    "text": "I work best:",
+    "type": "multiple-choice",
+    "category": "preferences",
+    "options": ["As part of a team", "Working independently", "Both are fine"]
+  },
+  {
+    "id": "q6",
+    "order": 6,
+    "text": "I'm good at paying attention to small details.",
+    "type": "scale",
+    "category": "skills",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q7",
+    "order": 7,
+    "text": "I enjoy learning about how the human body works.",
+    "type": "scale",
+    "category": "interests",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q8",
+    "order": 8,
+    "text": "I'm interested in how buildings, roads, and systems are constructed.",
+    "type": "scale",
+    "category": "interests",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q9",
+    "order": 9,
+    "text": "After high school, I plan to:",
+    "type": "multiple-choice",
+    "category": "education",
+    "options": [
+      "Start working right away",
+      "Get a certificate or short training (under 1 year)",
+      "Attend community college (2 years)",
+      "Attend a 4-year college",
+      "I'm not sure yet"
+    ]
+  },
+  {
+    "id": "q10",
+    "order": 10,
+    "text": "I'm comfortable talking to people I don't know well.",
+    "type": "scale",
+    "category": "skills",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q11",
+    "order": 11,
+    "text": "I want a career where I can make a difference in my community.",
+    "type": "scale",
+    "category": "interests",
+    "options": ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  },
+  {
+    "id": "q12",
+    "order": 12,
+    "text": "I'm willing to travel up to 30 minutes for work or training.",
+    "type": "multiple-choice",
+    "category": "preferences",
+    "options": ["Yes, definitely", "Maybe, depends on the opportunity", "No, I prefer to stay local"]
+  }
+]
