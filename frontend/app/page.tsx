@@ -40,7 +40,7 @@ export default function Home() {
             Lantern AI
           </h1>
           <p className="text-2xl text-gray-600 mb-4">
-            Discover Your Future Career Path
+            Discover Your Future
           </p>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
             AI-powered career guidance for rural students exploring healthcare and infrastructure careers

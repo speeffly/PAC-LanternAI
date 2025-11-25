@@ -141,6 +141,9 @@ export default function AssessmentPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">My Career Quiz</h1>
+        </div>
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Question {currentIndex + 1} of {questions.length}</span>
