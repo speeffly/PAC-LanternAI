@@ -1,4 +1,12 @@
-import { Career, CareerMatch, StudentProfile, DemandLevel } from '../types';
+import { Career, CareerMatch, StudentProfile, DemandLevel, BLSEconomicData } from '../types';
+import { getSeries, getMultipleSeries, BLS_SERIES, BLSSeries } from './blsClient';
+import { getBLSConfig } from '../config/blsConfig';
+
+// BLS economic data cache for careers
+let economicDataCache: {
+  data: BLSEconomicData[];
+  timestamp: number;
+} | null = null;
 
 // Sample career data - in production, this would come from a database
 const CAREERS: Career[] = [
@@ -294,5 +302,116 @@ export class CareerService {
       return ['Local Hospital', 'Community Health Center', 'Private Practices'];
     }
     return ['Local Construction Companies', 'Utility Companies', 'Contractors'];
+  }
+
+  /**
+   * Fetch economic data from BLS API
+   * Returns CPI, unemployment, and wage data for use in career recommendations
+   */
+  static async getEconomicData(): Promise<BLSEconomicData[]> {
+    const config = getBLSConfig();
+    
+    if (!config.enabled) {
+      return [];
+    }
+
+    // Check cache first
+    if (economicDataCache && 
+        Date.now() - economicDataCache.timestamp < config.cache.ttlMs) {
+      return economicDataCache.data;
+    }
+
+    try {
+      const currentYear = new Date().getFullYear();
+      const seriesIds = [
+        config.seriesIds.cpi,
+        config.seriesIds.unemployment,
+        config.seriesIds.wages,
+      ];
+
+      const series = await getMultipleSeries(seriesIds, currentYear - 5, currentYear);
+      
+      const result: BLSEconomicData[] = series.map((s: BLSSeries) => ({
+        seriesId: s.seriesID,
+        name: this.getSeriesName(s.seriesID, config),
+        data: s.data.map(d => ({
+          year: d.year,
+          period: d.period,
+          periodName: d.periodName,
+          value: d.value,
+        })),
+        lastUpdated: new Date(),
+      }));
+
+      // Cache the result
+      economicDataCache = {
+        data: result,
+        timestamp: Date.now(),
+      };
+
+      return result;
+    } catch (error) {
+      console.error('Failed to fetch BLS economic data:', (error as Error).message);
+      return economicDataCache?.data || [];
+    }
+  }
+
+  /**
+   * Get human-readable name for a BLS series ID
+   */
+  private static getSeriesName(seriesId: string, config: ReturnType<typeof getBLSConfig>): string {
+    if (seriesId === config.seriesIds.cpi || seriesId === BLS_SERIES.CPI_ALL_URBAN) {
+      return 'Consumer Price Index (CPI)';
+    }
+    if (seriesId === config.seriesIds.unemployment || seriesId === BLS_SERIES.UNEMPLOYMENT_RATE) {
+      return 'Unemployment Rate';
+    }
+    if (seriesId === config.seriesIds.wages || seriesId === BLS_SERIES.AVERAGE_HOURLY_EARNINGS) {
+      return 'Average Hourly Earnings';
+    }
+    return seriesId;
+  }
+
+  /**
+   * Get the latest unemployment rate from BLS data
+   */
+  static async getUnemploymentRate(): Promise<number | null> {
+    const config = getBLSConfig();
+    
+    if (!config.enabled) {
+      return null;
+    }
+
+    try {
+      const currentYear = new Date().getFullYear();
+      const series = await getSeries(config.seriesIds.unemployment, currentYear - 1, currentYear);
+      
+      if (series && series.data.length > 0) {
+        // Return the most recent value
+        return parseFloat(series.data[0].value);
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to fetch unemployment rate:', (error as Error).message);
+      return null;
+    }
+  }
+
+  /**
+   * Get career matches with BLS economic context
+   */
+  static async getCareerMatchesWithEconomicData(
+    profile: Partial<StudentProfile>,
+    zipCode: string
+  ): Promise<{
+    matches: CareerMatch[];
+    economicData: BLSEconomicData[];
+  }> {
+    const [matches, economicData] = await Promise.all([
+      Promise.resolve(this.getCareerMatches(profile, zipCode)),
+      this.getEconomicData(),
+    ]);
+
+    return { matches, economicData };
   }
 }

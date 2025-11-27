@@ -41,3 +41,6 @@ temp/
 # Database
 *.db
 *.sqlite
+
+# Cache
+cache/
