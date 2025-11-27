@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import BackButton from '@/app/components/BackButton';
 
 interface Career {
   id: string;
@@ -109,6 +110,12 @@ export default function CareerDetailPage() {
 
   if (err || !career) {
     return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-red-600 mb-4">{error || 'Career not found'}</p>
+          <BackButton className="text-blue-600 hover:underline">
+            Back to Results
+          </BackButton>
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -124,6 +131,23 @@ export default function CareerDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <BackButton className="text-blue-600 hover:underline mb-4 inline-block">
+            ← Back to Results
+          </BackButton>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{career.title}</h1>
+              <p className="text-gray-600 capitalize">{career.sector} Sector</p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-green-600">
+                ${(career.averageSalary / 1000).toFixed(0)}k
+              </div>
+              <div className="text-sm text-gray-500">Average Salary</div>
+            </div>
       <Header />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Career Summary */}
@@ -196,6 +220,37 @@ export default function CareerDetailPage() {
           )}
         </div>
 
+            {/* Action Buttons */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Take Action</h3>
+              <div className="space-y-3">
+                <Link
+                  href={`/action-plan/${career.id}`}
+                  className="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 text-center font-medium"
+                >
+                  📋 Get Your Action Plan
+                </Link>
+                <a
+                  href={`https://www.onetonline.org/link/summary/${career.onetCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 text-center font-medium"
+                >
+                  🔍 View on O*NET
+                </a>
+                <a
+                  href={`https://www.careeronestop.org/Toolkit/Jobs/find-jobs.aspx`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 text-center font-medium"
+                >
+                  💼 Find Jobs
+                </a>
+                <BackButton className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 text-center font-medium">
+                  ← Back to All Results
+                </BackButton>
+              </div>
+            </div>
         <Nav />
       </div>
     </div>
