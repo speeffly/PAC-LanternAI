@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import BackButton from '@/app/components/BackButton';
 
+const RESULTS_PATH = '/results'; // Change if your listings route differs
+
 interface Career {
   id: string;
   title: string;
@@ -47,7 +49,12 @@ interface EconomicDataPayload {
 
 export default function CareerDetailPage() {
   const params = useParams();
-  const id = typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params.id[0] : '';
+  const id =
+    typeof params?.id === 'string'
+      ? params.id
+      : Array.isArray(params?.id)
+      ? params.id[0]
+      : '';
 
   const [career, setCareer] = useState<Career | null>(null);
   const [econ, setEcon] = useState<EconomicDataPayload | null>(null);
@@ -61,21 +68,32 @@ export default function CareerDetailPage() {
       try {
         const [careerRes, econRes] = await Promise.all([
           fetch(`/api/careers/${encodeURIComponent(id)}`, { cache: 'no-store' }),
-          fetch(`/api/careers/${encodeURIComponent(id)}/economic-data`, { cache: 'no-store' }),
+          fetch(`/api/careers/${encodeURIComponent(id)}/economic-data`, {
+            cache: 'no-store',
+          }),
         ]);
 
         if (!careerRes.ok) {
           const body = await safeJson(careerRes);
-          throw new Error(body?.error || body?.message || `Career request failed (${careerRes.status})`);
+          throw new Error(
+            body?.error ||
+              body?.message ||
+              `Career request failed (${careerRes.status})`
+          );
         }
 
         if (!econRes.ok) {
           const body = await safeJson(econRes);
-          console.warn('Economic data fetch warning:', body?.error || body?.message || econRes.status);
+          console.warn(
+            'Economic data fetch warning:',
+            body?.error || body?.message || econRes.status
+          );
         }
 
         const careerJson = (await careerRes.json()) as ApiResponse<Career>;
-        const econJson = econRes.ok ? ((await econRes.json()) as ApiResponse<EconomicDataPayload>) : null;
+        const econJson = econRes.ok
+          ? ((await econRes.json()) as ApiResponse<EconomicDataPayload>)
+          : null;
 
         if (mounted) {
           setCareer(careerJson.data ?? null);
@@ -106,7 +124,7 @@ export default function CareerDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-xl text-gray-600">Loading career details...</p>
+            <p className="text-xl text-gray-600">Loading career details...</p>
         </div>
       </div>
     );
@@ -122,7 +140,9 @@ export default function CareerDetailPage() {
             <p className="text-red-700 mt-1">{err || 'Career not found'}</p>
           </div>
           <div className="text-center mb-8">
-            <BackButton className="text-blue-600 hover:underline">Back to Results</BackButton>
+            <BackButton className="text-blue-600 hover:underline">
+              Back to Results
+            </BackButton>
           </div>
           <Nav />
         </div>
@@ -138,7 +158,9 @@ export default function CareerDetailPage() {
         <div className="bg-white rounded-xl shadow p-6 mb-8">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{career.title}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {career.title}
+              </h1>
               <p className="text-gray-600 capitalize">{career.sector} Sector</p>
             </div>
             <div className="text-right">
@@ -152,7 +174,10 @@ export default function CareerDetailPage() {
           <p className="text-gray-700 mt-3">{career.description}</p>
           <div className="grid sm:grid-cols-2 gap-4 mt-6">
             <Info label="Sector" value={capitalize(career.sector)} />
-            <Info label="Required Education" value={prettyEdu(career.requiredEducation)} />
+            <Info
+              label="Required Education"
+              value={prettyEdu(career.requiredEducation)}
+            />
             <Info
               label="Salary (National Range)"
               value={`$${career.salaryRange.min.toLocaleString()} - $${career.salaryRange.max.toLocaleString()}`}
@@ -160,22 +185,26 @@ export default function CareerDetailPage() {
             <Info label="Growth Outlook" value={career.growthOutlook} />
           </div>
 
-          {career.certifications?.length > 0 && (
-            <div className="mt-6">
-              <h3 className="font-semibold text-gray-900">Common Certifications</h3>
-              <ul className="list-disc list-inside text-gray-700 mt-2">
-                {career.certifications.map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {career.certifications?.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900">
+                  Common Certifications
+                </h3>
+                <ul className="list-disc list-inside text-gray-700 mt-2">
+                  {career.certifications.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
         </div>
 
         {/* Economic Context */}
         <div className="bg-white rounded-xl shadow p-6 mb-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900">Economic Context</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Economic Context
+            </h2>
             {econ?.lastUpdated && (
               <span className="text-sm text-gray-500">
                 Updated: {new Date(econ.lastUpdated).toLocaleString()}
@@ -188,10 +217,12 @@ export default function CareerDetailPage() {
             </p>
           ) : (
             <>
-              {/* Summary tiles */}
               <div className="grid md:grid-cols-3 gap-6 mt-4">
                 {econ.economicIndicators.map((ind) => (
-                  <div key={ind.seriesId} className="bg-gray-50 rounded-lg p-4 border">
+                  <div
+                    key={ind.seriesId}
+                    className="bg-gray-50 rounded-lg p-4 border"
+                  >
                     <div className="flex justify-between text-sm text-gray-500">
                       <span>{ind.seriesId}</span>
                       <span>
@@ -200,7 +231,10 @@ export default function CareerDetailPage() {
                     </div>
                     <div className="text-lg font-semibold mt-2">{ind.name}</div>
                     <div className="text-2xl font-bold mt-1">
-                      {formatValue(ind.name, ind.data?.[0]?.value ?? 'N/A')}
+                      {formatValue(
+                        ind.name,
+                        ind.data?.[0]?.value ?? 'N/A'
+                      )}
                     </div>
                   </div>
                 ))}
@@ -208,7 +242,9 @@ export default function CareerDetailPage() {
 
               {typeof econ.currentUnemploymentRate === 'number' && (
                 <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <div className="font-semibold text-orange-800">Current Unemployment Rate</div>
+                  <div className="font-semibold text-orange-800">
+                    Current Unemployment Rate
+                  </div>
                   <div className="text-3xl font-bold text-orange-700 mt-1">
                     {econ.currentUnemploymentRate.toFixed(1)}%
                   </div>
@@ -239,10 +275,10 @@ export default function CareerDetailPage() {
               </a>
             )}
             <a
-              href={`https://www.careeronestop.org/Toolkit/Jobs/find-jobs.aspx`}
+              href="https://www.careeronestop.org/Toolkit/Jobs/find-jobs.aspx"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg紫-600 text白 py-3 px-4 rounded-lg hover:bg紫-700 text-center font-medium"
+              className="block w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 text-center font-medium"
             >
               💼 Find Jobs
             </a>
@@ -259,11 +295,15 @@ export default function CareerDetailPage() {
 }
 
 function Header() {
+  // Changed link destination & text
   return (
     <div className="bg-white shadow">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Link href="/" className="text-blue-600 hover:underline text-sm">
-          ← Back to Home
+        <Link
+          href={RESULTS_PATH}
+          className="text-blue-600 hover:underline text-sm"
+        >
+          ← Back to Results
         </Link>
       </div>
     </div>
@@ -273,10 +313,16 @@ function Header() {
 function Nav() {
   return (
     <div className="mt-8 flex justify-center gap-4">
-      <Link href="/results" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+      <Link
+        href={RESULTS_PATH}
+        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+      >
         View Career Matches
       </Link>
-      <Link href="/economic-data" className="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+      <Link
+        href="/economic-data"
+        className="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+      >
         Economic Insights (Full)
       </Link>
     </div>
