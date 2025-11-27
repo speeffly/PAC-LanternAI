@@ -46,7 +46,8 @@ interface EconomicDataPayload {
 }
 
 export default function CareerDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params.id[0] : '';
 
   const [career, setCareer] = useState<Career | null>(null);
   const [econ, setEcon] = useState<EconomicDataPayload | null>(null);
@@ -60,7 +61,6 @@ export default function CareerDetailPage() {
       try {
         const [careerRes, econRes] = await Promise.all([
           fetch(`/api/careers/${encodeURIComponent(id)}`, { cache: 'no-store' }),
-          // ✅ Updated line — job-specific economic data
           fetch(`/api/careers/${encodeURIComponent(id)}/economic-data`, { cache: 'no-store' }),
         ]);
 
@@ -75,23 +75,27 @@ export default function CareerDetailPage() {
         }
 
         const careerJson = (await careerRes.json()) as ApiResponse<Career>;
-        const econJson = econRes.ok
-          ? ((await econRes.json()) as ApiResponse<EconomicDataPayload>)
-          : null;
+        const econJson = econRes.ok ? ((await econRes.json()) as ApiResponse<EconomicDataPayload>) : null;
 
         if (mounted) {
-          setCareer(careerJson.data || null);
-          setEcon(econJson?.data || null);
+          setCareer(careerJson.data ?? null);
+          setEcon(econJson?.data ?? null);
         }
       } catch (e: any) {
         console.error(e);
-        if (mounted) setErr(e.message || 'Failed to load career details');
+        if (mounted) setErr(e?.message || 'Failed to load career details');
       } finally {
         if (mounted) setLoading(false);
       }
     }
 
-    load();
+    if (id) {
+      load();
+    } else {
+      setErr('Missing career id');
+      setLoading(false);
+    }
+
     return () => {
       mounted = false;
     };
@@ -110,18 +114,15 @@ export default function CareerDetailPage() {
 
   if (err || !career) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-xl text-red-600 mb-4">{error || 'Career not found'}</p>
-          <BackButton className="text-blue-600 hover:underline">
-            Back to Results
-          </BackButton>
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
             <h3 className="font-semibold text-red-800">Unable to load career</h3>
             <p className="text-red-700 mt-1">{err || 'Career not found'}</p>
+          </div>
+          <div className="text-center mb-8">
+            <BackButton className="text-blue-600 hover:underline">Back to Results</BackButton>
           </div>
           <Nav />
         </div>
@@ -131,12 +132,10 @@ export default function CareerDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <BackButton className="text-blue-600 hover:underline mb-4 inline-block">
-            ← Back to Results
-          </BackButton>
+      <Header />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Career Summary */}
+        <div className="bg-white rounded-xl shadow p-6 mb-8">
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{career.title}</h1>
@@ -148,11 +147,8 @@ export default function CareerDetailPage() {
               </div>
               <div className="text-sm text-gray-500">Average Salary</div>
             </div>
-      <Header />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Career Summary */}
-        <div className="bg-white rounded-xl shadow p-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{career.title}</h1>
+          </div>
+
           <p className="text-gray-700 mt-3">{career.description}</p>
           <div className="grid sm:grid-cols-2 gap-4 mt-6">
             <Info label="Sector" value={capitalize(career.sector)} />
@@ -181,7 +177,9 @@ export default function CareerDetailPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-gray-900">Economic Context</h2>
             {econ?.lastUpdated && (
-              <span className="text-sm text-gray-500">Updated: {new Date(econ.lastUpdated).toLocaleString()}</span>
+              <span className="text-sm text-gray-500">
+                Updated: {new Date(econ.lastUpdated).toLocaleString()}
+              </span>
             )}
           </div>
           {!econ ? (
@@ -220,37 +218,40 @@ export default function CareerDetailPage() {
           )}
         </div>
 
-            {/* Action Buttons */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Take Action</h3>
-              <div className="space-y-3">
-                <Link
-                  href={`/action-plan/${career.id}`}
-                  className="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 text-center font-medium"
-                >
-                  📋 Get Your Action Plan
-                </Link>
-                <a
-                  href={`https://www.onetonline.org/link/summary/${career.onetCode}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 text-center font-medium"
-                >
-                  🔍 View on O*NET
-                </a>
-                <a
-                  href={`https://www.careeronestop.org/Toolkit/Jobs/find-jobs.aspx`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 text-center font-medium"
-                >
-                  💼 Find Jobs
-                </a>
-                <BackButton className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 text-center font-medium">
-                  ← Back to All Results
-                </BackButton>
-              </div>
-            </div>
+        {/* Action Buttons */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">Take Action</h3>
+          <div className="space-y-3">
+            <Link
+              href={`/action-plan/${career.id}`}
+              className="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 text-center font-medium"
+            >
+              📋 Get Your Action Plan
+            </Link>
+            {career.onetCode && (
+              <a
+                href={`https://www.onetonline.org/link/summary/${career.onetCode}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 text-center font-medium"
+              >
+                🔍 View on O*NET
+              </a>
+            )}
+            <a
+              href={`https://www.careeronestop.org/Toolkit/Jobs/find-jobs.aspx`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full bg紫-600 text白 py-3 px-4 rounded-lg hover:bg紫-700 text-center font-medium"
+            >
+              💼 Find Jobs
+            </a>
+            <BackButton className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 text-center font-medium">
+              ← Back to All Results
+            </BackButton>
+          </div>
+        </div>
+
         <Nav />
       </div>
     </div>
