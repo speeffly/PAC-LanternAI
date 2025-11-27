@@ -1,0 +1,10 @@
+# This directory contains raw O*NET database files
+# See docs/ONET_INGESTION.md for instructions
+
+# Expected files:
+# - Occupation Data.txt
+# - Task Statements.txt
+# - Skills.txt
+# - Knowledge.txt
+# - Abilities.txt
+# - Education, Training, and Experience.txt
