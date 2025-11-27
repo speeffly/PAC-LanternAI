@@ -166,12 +166,73 @@ export default function EconomicDataPage() {
             </div>
           </div>
         ) : economicData.length === 0 ? (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 mb-8">
             <div className="flex items-start">
-              <span className="text-2xl mr-3">ℹ️</span>
-              <div>
-                <h3 className="font-semibold text-blue-800">No Economic Data Available</h3>
-                <p className="text-blue-700 mt-1">{message}</p>
+              <span className="text-3xl mr-4">📊</span>
+              <div className="flex-1">
+                <h3 className="font-bold text-xl text-blue-900 mb-3">Enable BLS Economic Data</h3>
+                <p className="text-blue-700 mb-4">{message || 'BLS integration needs to be configured in your backend.'}</p>
+                
+                <div className="bg-white rounded-lg p-6 border border-blue-200">
+                  <h4 className="font-semibold text-gray-800 mb-3">Quick Setup Guide:</h4>
+                  <ol className="list-decimal list-inside space-y-3 text-gray-700">
+                    <li>
+                      <strong>Open your backend .env file</strong>
+                      <code className="block mt-1 ml-5 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
+                        backend/.env
+                      </code>
+                    </li>
+                    <li>
+                      <strong>Add the following line to enable BLS:</strong>
+                      <code className="block mt-1 ml-5 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
+                        BLS_ENABLED=true
+                      </code>
+                    </li>
+                    <li>
+                      <strong>(Optional) Add a BLS API key for higher rate limits:</strong>
+                      <code className="block mt-1 ml-5 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
+                        BLS_API_KEY=your_key_here
+                      </code>
+                      <p className="ml-5 mt-1 text-sm text-gray-500">
+                        Get a free API key at{' '}
+                        <a 
+                          href="https://data.bls.gov/registrationEngine/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          data.bls.gov/registrationEngine
+                        </a>
+                      </p>
+                    </li>
+                    <li>
+                      <strong>Restart your backend server</strong>
+                      <code className="block mt-1 ml-5 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
+                        cd backend && npm run dev
+                      </code>
+                    </li>
+                    <li>
+                      <strong>Refresh this page</strong>
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    🔄 Refresh Page
+                  </button>
+                  <a
+                    href="https://www.bls.gov/developers/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-white border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 font-medium"
+                  >
+                    📖 BLS API Documentation
+                  </a>
+                </div>
               </div>
             </div>
           </div>
