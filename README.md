@@ -247,6 +247,17 @@ Set these environment variables to configure the BLS integration:
 | `BLS_CACHE_ENABLED` | `true` | Enable/disable response caching |
 | `BLS_CACHE_TTL_MS` | `3600000` | Cache time-to-live in milliseconds (1 hour) |
 
+### Testing the BLS Integration
+
+Once the backend is running with `npm run dev`, you can access the BLS economic data endpoint:
+
+```bash
+# Get economic indicators (CPI, unemployment rate, wages)
+curl http://localhost:3001/api/careers/economic-data
+```
+
+Or visit `http://localhost:3001/api/careers/economic-data` in your browser.
+
 ## Contributing
 
 1. Create a feature branch

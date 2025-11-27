@@ -96,6 +96,38 @@ router.post('/matches', (req, res) => {
   }
 });
 
+// GET /api/careers/economic-data - Get BLS economic data (CPI, unemployment, wages)
+router.get('/economic-data', async (req, res) => {
+  try {
+    const economicData = await CareerService.getEconomicData();
+    
+    // Extract unemployment rate from existing economic data to avoid redundant API call
+    let currentUnemploymentRate: number | null = null;
+    const unemploymentSeries = economicData.find(d => d.name === 'Unemployment Rate');
+    if (unemploymentSeries && unemploymentSeries.data.length > 0) {
+      currentUnemploymentRate = parseFloat(unemploymentSeries.data[0].value);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        economicIndicators: economicData,
+        currentUnemploymentRate,
+        lastUpdated: new Date().toISOString()
+      },
+      message: economicData.length > 0 
+        ? `Retrieved ${economicData.length} economic indicators from BLS` 
+        : 'BLS integration is disabled or no data available. Set BLS_ENABLED=true and optionally BLS_API_KEY in your .env file.'
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Error fetching BLS economic data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch economic data from BLS'
+    } as ApiResponse);
+  }
+});
+
 // GET /api/careers/:id/pathway - Get career pathway
 router.get('/:id/pathway', (req, res) => {
   try {
