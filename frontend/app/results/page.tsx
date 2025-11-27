@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { setCareerReferrer } from '@/app/components/BackButton';
 
 interface Career {
   id: string;
@@ -21,10 +22,17 @@ interface CareerMatch {
 
 export default function ResultsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [matches, setMatches] = useState<CareerMatch[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+
+  const navigateToCareer = (careerId: string) => {
+    // Store the current path so BackButton can return here
+    setCareerReferrer(pathname);
+    router.push(`/careers/${careerId}`);
+  };
 
   useEffect(() => {
     fetchResults();
@@ -159,7 +167,7 @@ export default function ResultsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => router.push(`/careers/${match.careerId}`)}
+                  onClick={() => navigateToCareer(match.careerId)}
                   className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
                 >
                   View Details

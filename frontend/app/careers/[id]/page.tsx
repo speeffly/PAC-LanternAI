@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import BackButton from '@/app/components/BackButton';
 
 interface Career {
   id: string;
@@ -63,9 +64,9 @@ export default function CareerDetailsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-xl text-red-600 mb-4">{error || 'Career not found'}</p>
-          <Link href="/results" className="text-blue-600 hover:underline">
+          <BackButton className="text-blue-600 hover:underline">
             Back to Results
-          </Link>
+          </BackButton>
         </div>
       </div>
     );
@@ -76,9 +77,9 @@ export default function CareerDetailsPage() {
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Link href="/results" className="text-blue-600 hover:underline mb-4 inline-block">
+          <BackButton className="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Results
-          </Link>
+          </BackButton>
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{career.title}</h1>
@@ -192,12 +193,9 @@ export default function CareerDetailsPage() {
                 >
                   💼 Find Jobs
                 </a>
-                <Link
-                  href="/results"
-                  className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 text-center font-medium"
-                >
+                <BackButton className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 text-center font-medium">
                   ← Back to All Results
-                </Link>
+                </BackButton>
               </div>
             </div>
 
