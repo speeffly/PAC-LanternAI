@@ -1,7 +1,9 @@
+// src/routes/careers.routes.ts
 import express from 'express';
 import { CareerService } from '../services/careerService';
 import { SessionService } from '../services/sessionService';
 import { ApiResponse } from '../types';
+import { getJobSpecificEconomicData } from '../services/careerEconomicService';
 
 const router = express.Router();
 
@@ -14,7 +16,7 @@ router.get('/', (req, res) => {
       data: careers,
       message: `Retrieved ${careers.length} careers`
     } as ApiResponse);
-  } catch (error) {
+  } catch {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve careers'
@@ -22,14 +24,13 @@ router.get('/', (req, res) => {
   }
 });
 
-// IMPORTANT: Place static route BEFORE dynamic '/:id'
-//
-// GET /api/careers/economic-data - Get BLS economic data (CPI, unemployment, wages)
+// --- STATIC ROUTES FIRST ---
+
+// GET /api/careers/economic-data - General BLS data (CPI, unemployment, wages)
 router.get('/economic-data', async (req, res) => {
   try {
     const economicData = await CareerService.getEconomicData();
-    
-    // Extract unemployment rate from existing economic data to avoid redundant API call
+
     let currentUnemploymentRate: number | null = null;
     const unemploymentSeries = economicData.find(d => d.name === 'Unemployment Rate');
     if (unemploymentSeries && unemploymentSeries.data.length > 0) {
@@ -43,8 +44,8 @@ router.get('/economic-data', async (req, res) => {
         currentUnemploymentRate,
         lastUpdated: new Date().toISOString()
       },
-      message: economicData.length > 0 
-        ? `Retrieved ${economicData.length} economic indicators from BLS` 
+      message: economicData.length > 0
+        ? `Retrieved ${economicData.length} economic indicators from BLS`
         : 'BLS integration is disabled or no data available. Set BLS_ENABLED=true and optionally BLS_API_KEY in your .env file.'
     } as ApiResponse);
   } catch (error) {
@@ -56,11 +57,10 @@ router.get('/economic-data', async (req, res) => {
   }
 });
 
-// GET /api/careers/:id - Get career by ID
-router.get('/:id', (req, res) => {
+// NEW: GET /api/careers/:id/economic-data - Job-specific economic indicators
+router.get('/:id/economic-data', async (req, res) => {
   try {
     const career = CareerService.getCareerById(req.params.id);
-
     if (!career) {
       return res.status(404).json({
         success: false,
@@ -68,12 +68,44 @@ router.get('/:id', (req, res) => {
       } as ApiResponse);
     }
 
+    const indicators = await getJobSpecificEconomicData(career.id);
+    res.json({
+      success: true,
+      data: {
+        economicIndicators: indicators,
+        lastUpdated: new Date().toISOString()
+      },
+      message: indicators.length > 0
+        ? `Retrieved ${indicators.length} indicators for ${career.title}`
+        : 'No job-specific series configured for this career.'
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Job-specific economic data error:', (error as Error).message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch job-specific economic data'
+    } as ApiResponse);
+  }
+});
+
+// --- DYNAMIC ROUTES AFTER STATIC ---
+
+// GET /api/careers/:id - Get career by ID
+router.get('/:id', (req, res) => {
+  try {
+    const career = CareerService.getCareerById(req.params.id);
+    if (!career) {
+      return res.status(404).json({
+        success: false,
+        error: 'Career not found'
+      } as ApiResponse);
+    }
     res.json({
       success: true,
       data: career,
       message: 'Career retrieved successfully'
     } as ApiResponse);
-  } catch (error) {
+  } catch {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve career'
@@ -100,7 +132,6 @@ router.post('/matches', (req, res) => {
       } as ApiResponse);
     }
 
-    // Get session with profile
     const session = SessionService.getSession(sessionId);
     if (!session || !session.profileData) {
       return res.status(404).json({
@@ -109,9 +140,7 @@ router.post('/matches', (req, res) => {
       } as ApiResponse);
     }
 
-    // Get career matches
     const matches = CareerService.getCareerMatches(session.profileData, zipCode);
-
     res.json({
       success: true,
       data: {
@@ -134,7 +163,6 @@ router.post('/matches', (req, res) => {
 router.get('/:id/pathway', (req, res) => {
   try {
     const career = CareerService.getCareerById(req.params.id);
-
     if (!career) {
       return res.status(404).json({
         success: false,
