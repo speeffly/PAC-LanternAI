@@ -1,71 +1,122 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface Career {
   id: string;
   title: string;
-  onetCode: string;
-  sector: string;
   description: string;
+  sector: string;
+  requiredEducation: string;
+  certifications: string[];
   averageSalary: number;
-  educationLevel: string;
-  skills?: string[];
-  tasks?: string[];
-  workEnvironment?: string;
+  salaryRange: { min: number; max: number };
+  growthOutlook: string;
+  onetCode?: string;
 }
 
-export default function CareerDetailsPage() {
-  const router = useRouter();
-  const params = useParams();
-  const careerId = params.id as string;
-  
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+interface BLSDataPoint {
+  year: string;
+  period: string;
+  periodName: string;
+  value: string;
+}
+
+interface EconomicIndicator {
+  seriesId: string;
+  name: string;
+  data: BLSDataPoint[];
+  lastUpdated: string;
+}
+
+interface EconomicDataPayload {
+  economicIndicators: EconomicIndicator[];
+  currentUnemploymentRate?: number | null;
+  lastUpdated: string;
+}
+
+export default function CareerDetailPage() {
+  const { id } = useParams<{ id: string }>();
+
   const [career, setCareer] = useState<Career | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [econ, setEcon] = useState<EconomicDataPayload | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCareerDetails();
-  }, [careerId]);
+    let mounted = true;
 
-  const loadCareerDetails = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/careers/${careerId}`
-      );
-      const data = await response.json();
+    async function load() {
+      try {
+        const [careerRes, econRes] = await Promise.all([
+          fetch(`/api/careers/${encodeURIComponent(id)}`, { cache: 'no-store' }),
+          // ✅ Updated line — job-specific economic data
+          fetch(`/api/careers/${encodeURIComponent(id)}/economic-data`, { cache: 'no-store' }),
+        ]);
 
-      if (data.success) {
-        setCareer(data.data);
-      } else {
-        setError(data.error || 'Career not found');
+        if (!careerRes.ok) {
+          const body = await safeJson(careerRes);
+          throw new Error(body?.error || body?.message || `Career request failed (${careerRes.status})`);
+        }
+
+        if (!econRes.ok) {
+          const body = await safeJson(econRes);
+          console.warn('Economic data fetch warning:', body?.error || body?.message || econRes.status);
+        }
+
+        const careerJson = (await careerRes.json()) as ApiResponse<Career>;
+        const econJson = econRes.ok
+          ? ((await econRes.json()) as ApiResponse<EconomicDataPayload>)
+          : null;
+
+        if (mounted) {
+          setCareer(careerJson.data || null);
+          setEcon(econJson?.data || null);
+        }
+      } catch (e: any) {
+        console.error(e);
+        if (mounted) setErr(e.message || 'Failed to load career details');
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading career:', error);
-      setError('Failed to connect to server');
-    } finally {
-      setIsLoading(false);
     }
-  };
 
-  if (isLoading) {
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading career details...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+          <p className="text-xl text-gray-600">Loading career details...</p>
+        </div>
       </div>
     );
   }
 
-  if (error || !career) {
+  if (err || !career) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-xl text-red-600 mb-4">{error || 'Career not found'}</p>
-          <Link href="/results" className="text-blue-600 hover:underline">
-            Back to Results
-          </Link>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+            <h3 className="font-semibold text-red-800">Unable to load career</h3>
+            <p className="text-red-700 mt-1">{err || 'Career not found'}</p>
+          </div>
+          <Nav />
         </div>
       </div>
     );
@@ -73,167 +124,140 @@ export default function CareerDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Link href="/results" className="text-blue-600 hover:underline mb-4 inline-block">
-            ← Back to Results
-          </Link>
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{career.title}</h1>
-              <p className="text-gray-600 capitalize">{career.sector} Sector</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-green-600">
-                ${(career.averageSalary / 1000).toFixed(0)}k
-              </div>
-              <div className="text-sm text-gray-500">Average Salary</div>
-            </div>
+      <Header />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Career Summary */}
+        <div className="bg-white rounded-xl shadow p-6 mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">{career.title}</h1>
+          <p className="text-gray-700 mt-3">{career.description}</p>
+          <div className="grid sm:grid-cols-2 gap-4 mt-6">
+            <Info label="Sector" value={capitalize(career.sector)} />
+            <Info label="Required Education" value={prettyEdu(career.requiredEducation)} />
+            <Info
+              label="Salary (National Range)"
+              value={`$${career.salaryRange.min.toLocaleString()} - $${career.salaryRange.max.toLocaleString()}`}
+            />
+            <Info label="Growth Outlook" value={career.growthOutlook} />
           </div>
+
+          {career.certifications?.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-semibold text-gray-900">Common Certifications</h3>
+              <ul className="list-disc list-inside text-gray-700 mt-2">
+                {career.certifications.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Overview */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">Career Overview</h2>
-              <p className="text-gray-700 leading-relaxed">{career.description}</p>
-            </div>
-
-            {/* Tasks */}
-            {career.tasks && career.tasks.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">What You'll Do</h2>
-                <ul className="space-y-2">
-                  {career.tasks.map((task, idx) => (
-                    <li key={idx} className="flex items-start">
-                      <span className="text-blue-600 mr-2">✓</span>
-                      <span className="text-gray-700">{task}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Skills */}
-            {career.skills && career.skills.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Key Skills Needed</h2>
-                <div className="flex flex-wrap gap-2">
-                  {career.skills.map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Work Environment */}
-            {career.workEnvironment && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Work Environment</h2>
-                <p className="text-gray-700">{career.workEnvironment}</p>
-              </div>
+        {/* Economic Context */}
+        <div className="bg-white rounded-xl shadow p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-gray-900">Economic Context</h2>
+            {econ?.lastUpdated && (
+              <span className="text-sm text-gray-500">Updated: {new Date(econ.lastUpdated).toLocaleString()}</span>
             )}
           </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Quick Facts */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Quick Facts</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500">Education Required</p>
-                  <p className="font-medium text-gray-900">{career.educationLevel}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">O*NET Code</p>
-                  <p className="font-medium text-gray-900">{career.onetCode}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Sector</p>
-                  <p className="font-medium text-gray-900 capitalize">{career.sector}</p>
-                </div>
+          {!econ ? (
+            <p className="text-gray-600 mt-2">
+              Economic data not available. Ensure BLS is enabled on the backend.
+            </p>
+          ) : (
+            <>
+              {/* Summary tiles */}
+              <div className="grid md:grid-cols-3 gap-6 mt-4">
+                {econ.economicIndicators.map((ind) => (
+                  <div key={ind.seriesId} className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>{ind.seriesId}</span>
+                      <span>
+                        {ind.data?.[0]?.periodName} {ind.data?.[0]?.year}
+                      </span>
+                    </div>
+                    <div className="text-lg font-semibold mt-2">{ind.name}</div>
+                    <div className="text-2xl font-bold mt-1">
+                      {formatValue(ind.name, ind.data?.[0]?.value ?? 'N/A')}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Take Action</h3>
-              <div className="space-y-3">
-                <Link
-                  href={`/action-plan/${career.id}`}
-                  className="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 text-center font-medium"
-                >
-                  📋 Get Your Action Plan
-                </Link>
-                <a
-                  href={`https://www.onetonline.org/link/summary/${career.onetCode}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 text-center font-medium"
-                >
-                  🔍 View on O*NET
-                </a>
-                <a
-                  href={`https://www.careeronestop.org/Toolkit/Jobs/find-jobs.aspx`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 text-center font-medium"
-                >
-                  💼 Find Jobs
-                </a>
-                <Link
-                  href="/results"
-                  className="block w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 text-center font-medium"
-                >
-                  ← Back to All Results
-                </Link>
-              </div>
-            </div>
-
-            {/* Resources */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Helpful Resources</h3>
-              <div className="space-y-3">
-                <a
-                  href="https://www.careeronestop.org/Toolkit/Training/find-local-training.aspx"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-blue-600 hover:underline text-sm"
-                >
-                  📚 Find Training Programs
-                </a>
-                <a
-                  href="https://www.careeronestop.org/Toolkit/Wages/find-salary.aspx"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-blue-600 hover:underline text-sm"
-                >
-                  💰 Salary Information
-                </a>
-                <a
-                  href="https://www.careeronestop.org/Videos/CareerVideos/career-videos.aspx"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-blue-600 hover:underline text-sm"
-                >
-                  🎥 Career Videos
-                </a>
-              </div>
-            </div>
-          </div>
+              {typeof econ.currentUnemploymentRate === 'number' && (
+                <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="font-semibold text-orange-800">Current Unemployment Rate</div>
+                  <div className="text-3xl font-bold text-orange-700 mt-1">
+                    {econ.currentUnemploymentRate.toFixed(1)}%
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
+
+        <Nav />
       </div>
     </div>
   );
+}
+
+function Header() {
+  return (
+    <div className="bg-white shadow">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <Link href="/" className="text-blue-600 hover:underline text-sm">
+          ← Back to Home
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Nav() {
+  return (
+    <div className="mt-8 flex justify-center gap-4">
+      <Link href="/results" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+        View Career Matches
+      </Link>
+      <Link href="/economic-data" className="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+        Economic Insights (Full)
+      </Link>
+    </div>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-gray-500 text-sm">{label}</div>
+      <div className="text-gray-900 font-medium">{value}</div>
+    </div>
+  );
+}
+
+function prettyEdu(e: string) {
+  if (e === 'high-school') return 'High School';
+  return e.charAt(0).toUpperCase() + e.slice(1);
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function formatValue(name: string, value: string) {
+  const num = parseFloat(value);
+  if (isNaN(num)) return value || 'N/A';
+  if (/\b(CPI|Price Index)\b/i.test(name)) return num.toFixed(1);
+  if (/\b(Unemployment|Rate)\b/i.test(name)) return `${num.toFixed(1)}%`;
+  if (/\b(Earnings|Wage)\b/i.test(name)) return `$${num.toFixed(2)}/hr`;
+  return value;
+}
+
+async function safeJson(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
