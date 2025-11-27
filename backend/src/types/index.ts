@@ -3,11 +3,17 @@
 export type UserRole = 'student' | 'counselor' | 'teacher' | 'admin';
 
 // BLS API Types
+export interface BLSFootnote {
+  code: string;
+  text: string;
+}
+
 export interface BLSDataPoint {
   year: string;
   period: string;
   periodName: string;
   value: string;
+  footnotes?: BLSFootnote[];
 }
 
 export interface BLSEconomicData {

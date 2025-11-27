@@ -339,6 +339,7 @@ export class CareerService {
           period: d.period,
           periodName: d.periodName,
           value: d.value,
+          footnotes: d.footnotes,
         })),
         lastUpdated: new Date(),
       }));
