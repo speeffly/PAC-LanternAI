@@ -42,6 +42,8 @@ temp/
 *.db
 *.sqlite
 
+# Cache
+cache/
 # O*NET data files (downloaded separately, not committed to repo)
 src/data/onet/*.txt
 src/data/onet_normalized.json

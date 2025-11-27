@@ -52,6 +52,7 @@ app.get('/api', (req, res) => {
       sessions: '/api/sessions',
       assessment: '/api/assessment',
       careers: '/api/careers',
+      blsEconomicData: '/api/careers/economic-data',
       actionPlans: '/api/action-plans'
     }
   });

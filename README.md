@@ -93,7 +93,21 @@ lantern-ai/
    npm run db:seed
    ```
 
-5. **Start development servers**
+5. **Configure BLS API (Optional)**
+   
+   To enable economic data enrichment from the Bureau of Labor Statistics:
+   
+   a. Register for a free API key at https://data.bls.gov/registrationEngine/
+   
+   b. Add to your `.env` file:
+   ```bash
+   BLS_API_KEY=your_api_key_here
+   BLS_ENABLED=true
+   ```
+   
+   > **Note:** The BLS API works without an API key, but with lower rate limits (25 series per request, 500 daily requests). With an API key, you get 50 series per request and 500 daily requests.
+
+6. **Start development servers**
    ```bash
    # Backend (Terminal 1)
    cd backend
@@ -187,6 +201,62 @@ npm run build
 ## API Documentation
 
 API documentation is available at `/api-docs` when running the backend server.
+
+## BLS API Integration
+
+Lantern AI integrates with the U.S. Bureau of Labor Statistics (BLS) API to provide accurate economic data for career recommendations.
+
+### Fetching BLS Data
+
+```typescript
+import { getSeries, getMultipleSeries, BLS_SERIES } from './services/blsClient';
+
+// Fetch CPI (Consumer Price Index) data
+const cpiData = await getSeries(BLS_SERIES.CPI_ALL_URBAN, 2020, 2023);
+
+// Fetch unemployment rate
+const unemploymentData = await getSeries(BLS_SERIES.UNEMPLOYMENT_RATE, 2020, 2023);
+
+// Fetch multiple series at once
+const economicData = await getMultipleSeries([
+  BLS_SERIES.CPI_ALL_URBAN,
+  BLS_SERIES.UNEMPLOYMENT_RATE,
+  BLS_SERIES.AVERAGE_HOURLY_EARNINGS
+], 2020, 2023);
+```
+
+### Available Series Constants
+
+| Constant | Series ID | Description |
+|----------|-----------|-------------|
+| `CPI_ALL_URBAN` | CUSR0000SA0 | Consumer Price Index for All Urban Consumers |
+| `CPI_FOOD` | CUSR0000SAF1 | CPI for Food |
+| `CPI_ENERGY` | CUSR0000SA0E | CPI for Energy |
+| `CPI_MEDICAL` | CUSR0000SAM | CPI for Medical Care |
+| `UNEMPLOYMENT_RATE` | LNS14000000 | Civilian Unemployment Rate |
+| `AVERAGE_HOURLY_EARNINGS` | CES0500000003 | Average Hourly Earnings |
+
+### Configuration Options
+
+Set these environment variables to configure the BLS integration:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BLS_API_KEY` | (none) | Your BLS API registration key |
+| `BLS_ENABLED` | `true` | Enable/disable BLS data enrichment |
+| `BLS_CACHE_ENABLED` | `true` | Enable/disable response caching |
+| `BLS_CACHE_TTL_MS` | `3600000` | Cache time-to-live in milliseconds (1 hour) |
+
+### Testing the BLS Integration
+
+Once the backend is running with `npm run dev`, you can access the BLS economic data endpoint:
+
+```bash
+# Get economic indicators (CPI, unemployment rate, wages)
+curl http://localhost:3001/api/careers/economic-data
+```
+
+Or visit `http://localhost:3001/api/careers/economic-data` in your browser.
 
 ## Contributing
 
