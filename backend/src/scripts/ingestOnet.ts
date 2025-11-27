@@ -65,7 +65,7 @@ async function main(): Promise<void> {
     console.log(`Source files processed: ${database.metadata.sourceFiles.join(', ')}`);
 
     console.log(`\nWriting normalized database to: ${OUTPUT_FILE}`);
-    await writeNormalizedDatabase(database, OUTPUT_FILE);
+    writeNormalizedDatabase(database, OUTPUT_FILE);
 
     console.log('\n✅ O*NET ingestion complete!');
     console.log(`Output: ${OUTPUT_FILE}`);
@@ -81,7 +81,17 @@ async function main(): Promise<void> {
     console.log(`  With skills: ${withSkills}`);
     console.log(`  With education level: ${withEducation}`);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    let errorMessage: string;
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      if (error.stack) {
+        console.error('\nStack trace:', error.stack);
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else {
+      errorMessage = 'Unknown error occurred';
+    }
     console.error(`\n❌ Error during ingestion: ${errorMessage}`);
     process.exit(1);
   }

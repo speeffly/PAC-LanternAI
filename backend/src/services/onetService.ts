@@ -54,7 +54,7 @@ function parseDelimitedLine(line: string, delimiter: string): string[] {
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
         current += '"';
         i++;
       } else {
@@ -283,12 +283,11 @@ export async function parseOnetDatabase(inputDir: string): Promise<NormalizedOne
  *
  * @param data - The normalized database to write
  * @param outputPath - Path to the output JSON file
- * @returns Promise resolving when write is complete
  */
-export async function writeNormalizedDatabase(
+export function writeNormalizedDatabase(
   data: NormalizedOnetDatabase,
   outputPath: string
-): Promise<void> {
+): void {
   const jsonContent = JSON.stringify(data, null, 2);
   fs.writeFileSync(outputPath, jsonContent, 'utf-8');
 }
