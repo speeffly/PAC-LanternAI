@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import CareerChatbot from '@/components/CareerChatbot';
 
 interface Career {
   id: string;
@@ -234,6 +235,9 @@ export default function CareerDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Career Chatbot */}
+      <CareerChatbot careerId={careerId} careerTitle={career.title} />
     </div>
   );
 }

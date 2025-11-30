@@ -1,4 +1,5 @@
 import { Career, CareerMatch, StudentProfile, DemandLevel } from '../types';
+import { OpenAIService } from './openaiService';
 
 // Sample career data - in production, this would come from a database
 const CAREERS: Career[] = [
@@ -177,6 +178,47 @@ export class CareerService {
 
     // Sort by match score descending
     return matches.sort((a, b) => b.matchScore - a.matchScore);
+  }
+
+  /**
+   * Enrich career matches with AI-generated conversational explanations and step-by-step plans
+   * This method adds conversationalExplanation and stepByStepPlan to the top matches
+   */
+  static async enrichMatchesWithAI(
+    matches: CareerMatch[],
+    profile: Partial<StudentProfile>,
+    topN: number = 5
+  ): Promise<CareerMatch[]> {
+    // Only enrich top N matches to save API costs
+    const topMatches = matches.slice(0, topN);
+    const remainingMatches = matches.slice(topN);
+
+    // Generate AI insights for top matches in parallel
+    const enrichedMatches = await Promise.all(
+      topMatches.map(async (match) => {
+        try {
+          const insights = await OpenAIService.generateCareerInsights(
+            profile,
+            match.career,
+            match.matchScore,
+            match.reasoningFactors
+          );
+
+          return {
+            ...match,
+            conversationalExplanation: insights.conversationalExplanation,
+            stepByStepPlan: insights.stepByStepPlan
+          };
+        } catch (error) {
+          console.error(`Error enriching match for ${match.career.title}:`, error);
+          // Return match without AI insights if generation fails
+          return match;
+        }
+      })
+    );
+
+    // Return enriched top matches + remaining matches
+    return [...enrichedMatches, ...remainingMatches];
   }
 
   /**

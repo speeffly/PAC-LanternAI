@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CareerChatbot from '@/components/CareerChatbot';
 
 interface Career {
   id: string;
@@ -16,6 +17,20 @@ interface CareerMatch {
   career: Career;
   matchScore: number;
   reasoningFactors: string[];
+  conversationalExplanation?: {
+    explanation: string;
+    highlights: string[];
+  };
+  stepByStepPlan?: {
+    steps: {
+      stepNumber: number;
+      title: string;
+      description: string;
+      timeframe: string;
+      priority: 'high' | 'medium' | 'low';
+    }[];
+    estimatedTimeToCareer: string;
+  };
   localDemand: string;
 }
 
@@ -149,13 +164,67 @@ export default function ResultsPage() {
               </div>
 
               <div className="mb-4">
-                <p className="text-sm font-semibold mb-2">Why this matches you:</p>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  {match.reasoningFactors.map((factor, i) => (
-                    <li key={i}>• {factor}</li>
-                  ))}
-                </ul>
+                {match.conversationalExplanation ? (
+                  <>
+                    <p className="text-sm font-semibold mb-2">Why this matches you:</p>
+                    <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                      {match.conversationalExplanation.explanation}
+                    </p>
+                    <ul className="text-sm text-gray-600 space-y-1 mb-4">
+                      {match.conversationalExplanation.highlights.map((highlight, i) => (
+                        <li key={i} className="flex items-start">
+                          <span className="text-blue-600 mr-2">✓</span>
+                          <span>{highlight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold mb-2">Why this matches you:</p>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {match.reasoningFactors.map((factor, i) => (
+                        <li key={i}>• {factor}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
+
+              {match.stepByStepPlan && (
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm font-semibold mb-3 text-blue-900">Your Step-by-Step Plan:</p>
+                  <div className="space-y-3">
+                    {match.stepByStepPlan.steps.map((step) => (
+                      <div key={step.stepNumber} className="flex gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+                          {step.stepNumber}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="text-sm font-semibold text-gray-900">{step.title}</h4>
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              step.priority === 'high' ? 'bg-red-100 text-red-800' :
+                              step.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {step.priority}
+                            </span>
+                            <span className="text-xs text-gray-500">{step.timeframe}</span>
+                          </div>
+                          <p className="text-sm text-gray-600">{step.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-blue-200">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Estimated time to career:</span>{' '}
+                      {match.stepByStepPlan.estimatedTimeToCareer}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -175,6 +244,9 @@ export default function ResultsPage() {
           ))}
         </div>
       </div>
+
+      {/* Career Chatbot - General career questions */}
+      <CareerChatbot />
     </div>
   );
 }

@@ -82,7 +82,10 @@ PORT=3001
 FRONTEND_URL=http://localhost:3000
 JWT_SECRET=lantern-ai-secret-key-change-in-production
 NODE_ENV=development
+OPENAI_API_KEY=your-openai-api-key-here
 ```
+
+**Note:** The `OPENAI_API_KEY` is required for generating conversational career explanations and step-by-step plans. Get your API key from https://platform.openai.com/api-keys
 
 Create `frontend/.env.local` if it doesn't exist:
 ```env

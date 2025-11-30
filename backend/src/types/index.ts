@@ -95,6 +95,20 @@ export interface CareerMatch {
   career: Career;
   matchScore: number;
   reasoningFactors: string[];
+  conversationalExplanation?: {
+    explanation: string;
+    highlights: string[];
+  };
+  stepByStepPlan?: {
+    steps: {
+      stepNumber: number;
+      title: string;
+      description: string;
+      timeframe: string;
+      priority: 'high' | 'medium' | 'low';
+    }[];
+    estimatedTimeToCareer: string;
+  };
   localDemand: DemandLevel;
   localSalary: {
     min: number;

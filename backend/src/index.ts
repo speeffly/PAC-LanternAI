@@ -8,6 +8,7 @@ import assessmentRoutes from './routes/assessment';
 import careersRoutes from './routes/careers';
 import authRoutes from './routes/auth';
 import actionPlansRoutes from './routes/actionPlans';
+import chatRoutes from './routes/chat';
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/assessment', assessmentRoutes);
 app.use('/api/careers', careersRoutes);
 app.use('/api/action-plans', actionPlansRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api', (req, res) => {
   res.json({
@@ -52,7 +54,8 @@ app.get('/api', (req, res) => {
       sessions: '/api/sessions',
       assessment: '/api/assessment',
       careers: '/api/careers',
-      actionPlans: '/api/action-plans'
+      actionPlans: '/api/action-plans',
+      chat: '/api/chat'
     }
   });
 });

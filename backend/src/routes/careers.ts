@@ -48,7 +48,7 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/careers/matches - Get career matches for a profile
-router.post('/matches', (req, res) => {
+router.post('/matches', async (req, res) => {
   try {
     const { sessionId, zipCode } = req.body;
 
@@ -78,14 +78,21 @@ router.post('/matches', (req, res) => {
     // Get career matches
     const matches = CareerService.getCareerMatches(session.profileData, zipCode);
 
+    // Enrich top matches with AI-generated conversational explanations and step-by-step plans
+    const enrichedMatches = await CareerService.enrichMatchesWithAI(
+      matches,
+      session.profileData,
+      5 // Enrich top 5 matches
+    );
+
     res.json({
       success: true,
       data: {
-        matches,
+        matches: enrichedMatches,
         profile: session.profileData,
-        totalMatches: matches.length
+        totalMatches: enrichedMatches.length
       },
-      message: `Found ${matches.length} career matches`
+      message: `Found ${enrichedMatches.length} career matches`
     } as ApiResponse);
   } catch (error) {
     console.error('Error getting career matches:', error);

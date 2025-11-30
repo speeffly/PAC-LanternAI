@@ -51,10 +51,14 @@ export default function ActionPlanPage() {
       const userData = user ? JSON.parse(user) : null;
       const zipCode = localStorage.getItem('zipCode') || userData?.zipCode;
       const grade = userData?.grade;
+      const sessionId = localStorage.getItem('sessionId');
 
       const queryParams = new URLSearchParams();
       if (grade) queryParams.append('grade', grade.toString());
       if (zipCode) queryParams.append('zipCode', zipCode);
+      if (sessionId) queryParams.append('sessionId', sessionId);
+      // Request AI-generated plan if available
+      queryParams.append('useAI', 'true');
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/action-plans/${careerCode}?${queryParams}`
